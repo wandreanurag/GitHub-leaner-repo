@@ -1,12 +1,15 @@
 package com.airtribe.learntrack.ui;
 
 import com.airtribe.learntrack.entity.Course;
+import com.airtribe.learntrack.entity.Enrollment;
 import com.airtribe.learntrack.entity.Student;
 import com.airtribe.learntrack.exception.EntityNotFoundException;
 import com.airtribe.learntrack.service.CourseService;
+import com.airtribe.learntrack.service.EnrollmentService;
 import com.airtribe.learntrack.service.StudentService;
 import com.airtribe.learntrack.util.IdGenerator;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class LeanerTrackerMain {
@@ -15,11 +18,13 @@ public class LeanerTrackerMain {
             Scanner sc = new Scanner(System.in);
             StudentService studentService = new StudentService();
             CourseService corseservice=  new CourseService();
+            EnrollmentService enrollement =  new EnrollmentService();
 
             while (true) {
                 System.out.println("\n==== LearnTrack Menu ====");
                 System.out.println("A. Student Management");
                 System.out.println("B. Course Management");
+                System.out.println("C. Enrollement Management");
                 System.out.print("Enter option: ");
 
                 String mainChoice = sc.nextLine();
@@ -29,8 +34,10 @@ public class LeanerTrackerMain {
                 }
                 else if (mainChoice.equalsIgnoreCase("B")) {
                     courseMenu(sc, corseservice);
+                }else if (mainChoice.equalsIgnoreCase("C")) {
+                    enrollmentMenu(sc, studentService,corseservice,enrollement);
                 }
-                else if (mainChoice.equalsIgnoreCase("C")) {
+                else if (mainChoice.equalsIgnoreCase("D")) {
                     System.out.println("Exiting application...");
                     break;
                 }
@@ -93,6 +100,7 @@ private static void courseMenu(Scanner sc, CourseService courseService){
         System.out.println("1. Add Course");
         System.out.println("2. View Course");
         System.out.println("3. Search Course by ID");
+        System.out.println("4. Back");
 
 
         int choice = Integer.parseInt(sc.nextLine());
@@ -137,6 +145,61 @@ private static void courseMenu(Scanner sc, CourseService courseService){
         }
     }
 }
+    // ---------------- ENROLLMENT MENU ----------------
+    private static void enrollmentMenu(
+            Scanner sc,
+            StudentService studentService,
+            CourseService courseService,
+            EnrollmentService enrollmentService) {
+
+        while (true) {
+            System.out.println("\n--- Enrollment Menu ---");
+            System.out.println("1. Enroll Student");
+            System.out.println("2. View Enrollments by Student");
+            System.out.println("3. Back");
+
+            int choice = Integer.parseInt(sc.nextLine());
+
+            try {
+                if (choice == 1) {
+                    System.out.print("Student ID: ");
+                    int studentId = Integer.parseInt(sc.nextLine());
+                    studentService.getStudent(studentId); // validation
+
+                    System.out.print("Course ID: ");
+                    int courseId = Integer.parseInt(sc.nextLine());
+                    courseService.getCourse(courseId); // validation
+
+                    Enrollment e = new Enrollment(
+                            IdGenerator.nextId(), studentId, courseId);
+                    enrollmentService.enrollStudent(e);
+
+                    System.out.println("Student enrolled successfully");
+
+                } else if (choice == 2) {
+                    System.out.print("Student ID: ");
+                    int studentId = Integer.parseInt(sc.nextLine());
+
+                    List<Enrollment> list =
+                            enrollmentService.getEnrollmentsForStudent(studentId);
+
+                    if (list.isEmpty()) {
+                        System.out.println("No enrollments found");
+                    } else {
+                        for (Enrollment e : list) {
+                            System.out.println(
+                                    "Course ID: " + e.getCourseId() +
+                                            ", Status: " + e.getStatus());
+                        }
+                    }
+                } else {
+                    return;
+                }
+            } catch (EntityNotFoundException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
 
 }
 
